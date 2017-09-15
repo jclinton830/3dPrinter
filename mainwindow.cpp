@@ -29,8 +29,8 @@
 #include <RobSim/Visual/OgreMaterials.h>
 #include <RobSim/Visual/VisualComponent.h>
 #include <RobSim/Visual/VisualSystem.h>
-#include <RobSim/World.h>
 #include <RobSim/Loader/SimulationLoader.h>
+#include <RobSim/World.h>
 
 #include <cassert>
 
@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Upload code and 3D mesh
     connect(m_ui->loadCode, SIGNAL(clicked()), this, SLOT(loadCode()));
-    connect(m_ui->loadModel, SIGNAL(clicked()), this, SLOT(loadMode()));
+    connect(m_ui->loadModel, SIGNAL(clicked()), this, SLOT(loadModel()));
 
     connect(m_ui->robot, SIGNAL(activated(int)), this, SLOT(chooseRobot(int)));
     connect(m_ui->joint, SIGNAL(activated(int)), this, SLOT(chooseJoint(int)));
@@ -151,7 +151,6 @@ void MainWindow::loadWorld(const QString &path)
     {
         try
         {
-
             watcher->waitForFinished();
 
             m_simulation->initialise();
@@ -174,6 +173,8 @@ void MainWindow::loadWorld(const QString &path)
         try
         {
             m_simulation->load(path.toStdString());
+
+            m_ui->viewer->zoomExtents();
         }
         catch (const std::exception &e)
         {
@@ -521,7 +522,10 @@ void MainWindow::createSphere(RobSim::Vector3 position)
 
 void MainWindow::loadCode()
 {
-    auto file = QFileDialog::getOpenFileName(this, "Select RAPID File", "", "RAPID Code (*.txt)");
+    //auto file = QFileDialog::getOpenFileName(this, "Select RAPID File", "", "RAPID Code (*.txt)");
+
+    QFileInfo fi("C:/Development/3dPrinter/RAPID code/CURVE_THING_JOB.txt");
+    QString file = fi.absoluteFilePath();
     if (!file.isEmpty())
     {
         loadCode(file);
@@ -554,12 +558,13 @@ void MainWindow::processFile(const QString &path)
     QVector<QString> positionData;
 
 
-
     while(!in.atEnd())
     {
         //reading line by line
         line = in.readLine();
         m_ui->messages->insertPlainText(line + "\n");
+        if (line == "PROC Path_10()")
+            break;
 
         //line process
         Data = line.split("=");
@@ -576,7 +581,7 @@ void MainWindow::processFile(const QString &path)
         for (int i = 0; i<=2; ++i)
         {
             m_ui->messages->insertPlainText(positionData[i] + " ");
-            if(i == 2)
+            if (i == 2)
             {
                 m_ui->messages->insertPlainText("\n");
             }
@@ -598,35 +603,58 @@ void MainWindow::loadModel()
 
 void MainWindow::loadModel(const QString &path)
 {
+    auto watcher = new QFutureWatcher<void>(this);
 
     m_simulation.reset(new RobSim::Simulation);
     m_simulation->setOgre(m_manager);
 
-    m_ui->loadWorld->setEnabled(false);
-    m_ui->loadWorld->setText("Loading...");
+    m_ui->loadModel->setEnabled(false);
+    m_ui->loadModel->setText("Loading...");
+
+    connect(watcher, &QFutureWatcher<void>::finished, [this, watcher]()
+    {
+        try
+        {
+            watcher->waitForFinished();
+
+            m_simulation->initialise();
+            m_ui->viewer->update();
+            m_ui->viewer->zoomExtents();
 
 
-    m_simulation->initialise();
-    m_ui->viewer->update();
-    m_ui->viewer->zoomExtents();
+        }
+        catch (const QException& e)
+        {
+            QMessageBox::critical(this, "Error Loading World", e.what());
+        }
 
-    //code to load mesh and renderon viewer
-    RobSim::WorldObject *object = m_simulation->getWorld()->create<RobSim::WorldObject>("3d_Model");
+            m_ui->loadModel->setEnabled(true);
+            m_ui->loadModel->setText("Load Mesh");
+    });
 
-    RobSim::Mesh *mesh;
-    auto visualComponent = new RobSim::VisualComponent;
 
-    auto Mesh = mesh->load(path.toStdString());
-    visualComponent->addMesh(Mesh);
-    object->addComponent(visualComponent);
+    watcher->setFuture(QtConcurrent::run([this, path]()
+    {
+        try
+        {
+            //load mesh and render on viewer
+            RobSim::WorldObject *object = m_simulation->getWorld()->create<RobSim::WorldObject>("3d_Model");
+            RobSim::Mesh *mesh;
+            auto Mesh = mesh->load(path.toStdString());
+            auto visualComponent = new RobSim::VisualComponent(std::move(Mesh));
+            object->addComponent(visualComponent);
 
-    m_draw->begin(RobSim::OgreMaterials::debug(), Ogre::RenderOperation::OT_POINT_LIST);
-    m_draw->position(Ogre::Vector3(0.0f, 0.0f, 0.0f));
-    m_draw->colour(Ogre::ColourValue::Blue);
-    m_draw->end();
 
-    m_ui->loadCode->setEnabled(true);
-    m_ui->loadCode->setText("Load Mesh");
+            m_ui->viewer->zoomExtents();
+
+
+        }
+        catch (const std::exception &e)
+        {
+            throw WorldViewerException(e.what());
+        }
+    }));
+
 }
 
 
