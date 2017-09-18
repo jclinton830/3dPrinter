@@ -175,6 +175,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="slice">
+          <property name="text">
+           <string>Slice</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="groupBox">
           <property name="title">
            <string>Robot</string>

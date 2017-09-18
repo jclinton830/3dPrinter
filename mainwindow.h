@@ -3,6 +3,7 @@
 
 #include "CallbackSink.h"
 #include "ui_MainWindow.h"
+#include "part.h"
 
 #include <RobSim/Collision/DebugDrawer.h>
 #include <RobSim/Collision/DefaultCollisionWorld.h>
@@ -28,6 +29,7 @@ namespace RobSim
 {
 class Joint;
 class Robot;
+class TransformObject;
 }
 
 class MainWindow : public QMainWindow
@@ -62,6 +64,7 @@ private slots:
 
     void on_print_clicked();
     void on_path_clicked();
+    void on_slice_clicked();
 
     void updateIK();
 
@@ -103,6 +106,9 @@ private:
     RobSim::Vector m_goalConfig;
 
     std::vector<RobSim::Robot *> m_robots;
+
+    std::unique_ptr<Part> m_part = nullptr;
+    RobSim::TransformObject *m_workpiece = nullptr;
 };
 
 #endif // WORLDVIEWER_MAINWINDOW_H

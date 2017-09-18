@@ -248,6 +248,13 @@ void MainWindow::setupSimulation()
     {
         chooseRobot(0);
     }
+
+    // set workpiece
+
+    m_workpiece = m_simulation->getWorld()->create<RobSim::TransformObject>("Workpiece");
+    m_workpiece->addComponent<RobSim::VisualComponent>();
+
+    m_workpiece->setPosition(1000, -4000, 800);
 }
 
 void MainWindow::chooseRobot(int index)
@@ -603,60 +610,32 @@ void MainWindow::loadModel()
 
 void MainWindow::loadModel(const QString &path)
 {
-    auto watcher = new QFutureWatcher<void>(this);
-
-    m_simulation.reset(new RobSim::Simulation);
-    m_simulation->setOgre(m_manager);
-
     m_ui->loadModel->setEnabled(false);
     m_ui->loadModel->setText("Loading...");
 
-    connect(watcher, &QFutureWatcher<void>::finished, [this, watcher]()
-    {
-        try
-        {
-            watcher->waitForFinished();
+    if (!m_workpiece) {
+        return;
+    }
 
-            m_simulation->initialise();
-            m_ui->viewer->update();
-            m_ui->viewer->zoomExtents();
+    m_part = std::make_unique<Part>("part");
+    m_part->load(path.toStdString());
 
+    auto object = m_simulation->getWorld()->create<RobSim::WorldObject>("part");
+    m_workpiece->addChild(object);
 
-        }
-        catch (const QException& e)
-        {
-            QMessageBox::critical(this, "Error Loading World", e.what());
-        }
+    auto collisionComponent = new RobSim::CollisionComponent;
+    collisionComponent->addMesh(m_part->getMesh());
 
-            m_ui->loadModel->setEnabled(true);
-            m_ui->loadModel->setText("Load Mesh");
-    });
-
-
-    watcher->setFuture(QtConcurrent::run([this, path]()
-    {
-        try
-        {
-            //load mesh and render on viewer
-            RobSim::WorldObject *object = m_simulation->getWorld()->create<RobSim::WorldObject>("3d_Model");
-            RobSim::Mesh *mesh;
-            auto Mesh = mesh->load(path.toStdString());
-            auto visualComponent = new RobSim::VisualComponent(std::move(Mesh));
-            object->addComponent(visualComponent);
-
-
-            m_ui->viewer->zoomExtents();
-
-
-        }
-        catch (const std::exception &e)
-        {
-            throw WorldViewerException(e.what());
-        }
-    }));
-
+    object->addComponent<RobSim::VisualComponent>(m_part->getMesh());
+    object->addComponent(collisionComponent);
 }
 
+void MainWindow::on_slice_clicked()
+{
+    if(!m_part) {
+        return;
+    }
 
-
-
+    m_part->process(m_simulation->getSystem<RobSim::CollisionSystem>(), m_workpiece->getPosition());
+    m_part->drawSlicePoints(m_draw);
+}

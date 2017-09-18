@@ -29,12 +29,14 @@ QMAKE_CFLAGS_WARN_ON = -wd4251
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    abbinversekinematics.cpp
+    abbinversekinematics.cpp \
+    part.cpp
 
 HEADERS  += mainwindow.h \
     CallbackSink.h \
     WorldViewerException.h \
-    abbinversekinematics.h
+    abbinversekinematics.h \
+    part.h
 
 FORMS    += mainwindow.ui
 
