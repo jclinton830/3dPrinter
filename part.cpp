@@ -4,6 +4,8 @@
 #include <RobSim/Collision/CollisionSystem.h>
 #include <RobSim/Visual/OgreMaterials.h>
 
+
+
 #include <OgreManualObject.h>
 
 
@@ -24,6 +26,11 @@ void Part::load(const std::string &path)
 std::shared_ptr<RobSim::Mesh> Part::getMesh()
 {
     return m_mesh;
+}
+
+std::vector<RobSim::Vector3> Part::getSlicePoints()
+{
+    return m_slicePoints;
 }
 
 void Part::process(RobSim::CollisionSystem *coll, RobSim::Vector3 position)
@@ -63,9 +70,10 @@ void Part::process(RobSim::CollisionSystem *coll, RobSim::Vector3 position)
              end+=position;
 
              RobSim::RayCastResult result = coll->rayCast(start, end);
-             std::cout << result.point.transpose() <<std::endl;
+             //std::cout << result.point.transpose() <<std::endl;
              if(result.hit) {
                  m_slicePoints.push_back(result.point);
+
              }
         }
     }

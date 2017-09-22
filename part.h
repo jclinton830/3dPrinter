@@ -25,6 +25,8 @@ public:
     void process(RobSim::CollisionSystem *coll, RobSim::Vector3 position);
     void drawSlicePoints(Ogre::ManualObject *draw);
 
+    std::vector<RobSim::Vector3> getSlicePoints();
+
     const std::string name;
 
 private:

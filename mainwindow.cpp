@@ -179,8 +179,9 @@ void MainWindow::loadWorld(const QString &path)
         catch (const std::exception &e)
         {
             throw WorldViewerException(e.what());
-        }
+        }               
     }));
+    m_ui->viewer->zoomExtents();
 }
 
 void MainWindow::setupSimulation()
@@ -254,7 +255,7 @@ void MainWindow::setupSimulation()
     m_workpiece = m_simulation->getWorld()->create<RobSim::TransformObject>("Workpiece");
     m_workpiece->addComponent<RobSim::VisualComponent>();
 
-    m_workpiece->setPosition(1000, -4000, 800);
+    m_workpiece->setPosition(1000, -5000, 500);
 }
 
 void MainWindow::chooseRobot(int index)
@@ -474,21 +475,55 @@ void MainWindow::updateIK()
 
 void MainWindow::on_path_clicked()
 {
-    RobSim::Matrix4 p = RobSim::Matrix4::Identity();
-    p.topRightCorner<3, 1>() = RobSim::Vector3(1500, 0, 500);
-    p.topLeftCorner<3, 3>() = RobSim::AngleAxis(M_PI, RobSim::Vector3::UnitX()).toRotationMatrix();
+    std::vector<RobSim::Vector3> slicePoints = m_part->getSlicePoints();
 
-    RobSim::Matrix4 pb = p;
-    pb(0, 3) = 1250;
+    RobSim::JointSet *ikJoints = m_robot->getJointSet("Arm");
 
-    auto *path = new RobSim::LinearPath(m_robot->getJointSet("Arm"), 1);
-    path->addPoint(p);
-    path->addPoint(pb);
+    for (int rail = 0; rail < 5900; rail+=200.0f)
+    {
+        m_robot->getJoints()[0]->setValue(rail);
+        for (int cfg = 1; cfg <= 8; cfg++)
+        {
+            std::cout << "Trying for rail: " << rail << ", cfg: " << cfg << std::endl;
+            bool valid = true;
+            for (std::size_t i = 0; i < slicePoints.size(); ++i)
+            {
+                RobSim::Matrix4 pose = RobSim::Matrix4::Identity();
+                pose.topLeftCorner<3, 3>() = RobSim::AngleAxis(RobSim::radians(180.0f), RobSim::Vector3::UnitX()).toRotationMatrix();
+                pose.topRightCorner<3, 1>() = slicePoints[i];
 
-    m_path.reset(path);
+                RobSim::Vector result;
+                // check for IK solution
+                valid = ikJoints->getIk()->solve(result, pose, cfg);
+                if (!valid) {
+                    break;
+                }
+            }
+            if (valid) {
+                std::cout << "Solved for rail: " << rail << ", cfg: " << cfg << std::endl;
 
-    m_ui->pathSlider->setEnabled(true);
-    m_ui->play->setEnabled(true);
+                // all points solved;
+                RobSim::LinearPath *path = new RobSim::LinearPath(ikJoints, cfg);
+
+                path->clear();
+
+                for (std::size_t i = 0; i < slicePoints.size(); ++i)
+                {
+                    RobSim::Matrix4 pose = RobSim::Matrix4::Identity();
+                    pose.topLeftCorner<3, 3>() = RobSim::AngleAxis(RobSim::radians(180.0f), RobSim::Vector3::UnitX()).toRotationMatrix();
+                    pose.topRightCorner<3, 1>() = slicePoints[i];
+                    path->addPoint(pose);
+                }
+
+                m_path.reset(path);
+
+                m_ui->pathSlider->setEnabled(true);
+                m_ui->play->setEnabled(true);
+
+                return;
+            }
+        }
+    }
 }
 
 void MainWindow::updateWeld()
@@ -638,4 +673,7 @@ void MainWindow::on_slice_clicked()
 
     m_part->process(m_simulation->getSystem<RobSim::CollisionSystem>(), m_workpiece->getPosition());
     m_part->drawSlicePoints(m_draw);
+
+    m_ui->loadModel->setEnabled(false);
+    m_ui->loadModel->setText("Load Model");
 }
