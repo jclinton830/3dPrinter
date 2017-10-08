@@ -13,6 +13,8 @@
 #include <QMessageBox>
 #include <QtConcurrent>
 
+#include<string>
+#include<sstream>
 
 #include <RobSim/Collision/CollisionSystem.h>
 #include <RobSim/Collision/CollisionComponent.h>
@@ -30,6 +32,7 @@
 #include <RobSim/Visual/VisualComponent.h>
 #include <RobSim/Visual/VisualSystem.h>
 #include <RobSim/Loader/SimulationLoader.h>
+#include <RobSim/Robot/Transforms.h>
 #include <RobSim/World.h>
 
 #include <cassert>
@@ -128,7 +131,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::loadWorld()
 {
-    QFileInfo fi("C:/Development/3dPrinter/world/mrl.lua");
+    QFileInfo fi("C:/Development/3dPrinter/world/lua/mrl.lua");
     QString file = fi.absoluteFilePath();
     if (!file.isEmpty())
     {
@@ -476,6 +479,10 @@ void MainWindow::updateIK()
 void MainWindow::on_path_clicked()
 {
     std::vector<RobSim::Vector3> slicePoints = m_part->getSlicePoints();
+    std::vector<std::string> robTarget;
+
+    QString filename = "RobotData.txt";
+    QFile file(filename);
 
     RobSim::JointSet *ikJoints = m_robot->getJointSet("Arm");
 
@@ -499,7 +506,8 @@ void MainWindow::on_path_clicked()
                     break;
                 }
             }
-            if (valid) {
+            if (valid)
+            {
                 std::cout << "Solved for rail: " << rail << ", cfg: " << cfg << std::endl;
 
                 // all points solved;
@@ -507,13 +515,39 @@ void MainWindow::on_path_clicked()
 
                 path->clear();
 
-                for (std::size_t i = 0; i < slicePoints.size(); ++i)
-                {
-                    RobSim::Matrix4 pose = RobSim::Matrix4::Identity();
-                    pose.topLeftCorner<3, 3>() = RobSim::AngleAxis(RobSim::radians(180.0f), RobSim::Vector3::UnitX()).toRotationMatrix();
-                    pose.topRightCorner<3, 1>() = slicePoints[i];
-                    path->addPoint(pose);
+                if (file.open(QIODevice::ReadWrite)) {
+                    for (std::size_t i = 0; i < 99; ++i)
+                    {
+                        if (i == 99)
+                            break;
+
+                        RobSim::Matrix4 pose = RobSim::Matrix4::Identity();
+                        pose.topLeftCorner<3, 3>() = RobSim::AngleAxis(RobSim::radians(180.0f), RobSim::Vector3::UnitX()).toRotationMatrix();
+                        pose.topRightCorner<3, 1>() = slicePoints[i];
+                        path->addPoint(pose);
+                        RobSim::Quaternion quat = RobSim::Abb::poseToQuat(pose);
+
+                        std::ostringstream oss;
+                        oss << "[[" << std::to_string(slicePoints[i].x()) << ","
+                            << std::to_string(slicePoints[i].y())
+                            << "," << std::to_string(slicePoints[i].z()) << "],["
+                            << std::to_string(quat.w())
+                            << ","  << std::to_string(quat.x())
+                            << ","  << std::to_string(quat.y())
+                            << "," << std::to_string(quat.z()) <<
+                               "],[0,0,0,0],["<< std::to_string(rail) << ",9E9, 9E9, 9E9, 9E9, 9E9]],";
+
+                        std::string Target = oss.str();
+
+                        robTarget.push_back(Target);
+
+                        //std::cout << robTarget[i]<< std::endl;
+
+                        QTextStream stream(&file);
+                        stream << QString::fromStdString(robTarget[i])  << endl;
+                    }
                 }
+                file.close();
 
                 m_path.reset(path);
 
@@ -636,12 +670,15 @@ void MainWindow::processFile(const QString &path)
 
 void MainWindow::loadModel()
 {
-    auto file = QFileDialog::getOpenFileName(this, "Select 3D Model", "", "3D Model (*.stl)");
+
+    QFileInfo fi("C:/Development/3dPrinter/cylinder.stl");
+    QString file = fi.absoluteFilePath();
     if (!file.isEmpty())
     {
         loadModel(file);
     }
 }
+
 
 void MainWindow::loadModel(const QString &path)
 {

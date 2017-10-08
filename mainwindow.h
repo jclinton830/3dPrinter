@@ -20,6 +20,10 @@
 
 #include <vector>
 
+
+
+
+
 namespace Ogre
 {
 class SceneManager;

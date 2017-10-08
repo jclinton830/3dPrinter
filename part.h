@@ -15,6 +15,9 @@ class CollisionSystem;
 
 class Part
 {
+
+
+
 public:
     ~Part();
     Part(std::string name);

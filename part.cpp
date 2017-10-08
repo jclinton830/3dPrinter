@@ -47,7 +47,7 @@ void Part::process(RobSim::CollisionSystem *coll, RobSim::Vector3 position)
 
     // create angles
     std::vector<float> angles;
-    for(float alpha = 0; alpha < 360.0f; alpha+=15.0f)
+    for(float alpha = 0; alpha < 360.0f; alpha+=20.0f)
     {
         angles.push_back(alpha);
     }
@@ -62,7 +62,7 @@ void Part::process(RobSim::CollisionSystem *coll, RobSim::Vector3 position)
 
              // move start out
              RobSim::Vector3 direction = RobSim::Vector3::UnitX();
-             RobSim::AngleAxis rotation = RobSim::AngleAxis(RobSim::radians(angles[a] + heights[z]/100.0f*5.0f), RobSim::Vector3::UnitZ());
+             RobSim::AngleAxis rotation = RobSim::AngleAxis(RobSim::radians(angles[a] + heights[z]/40.0f*5.0f), RobSim::Vector3::UnitZ());
              direction = rotation.toRotationMatrix()*direction;
              start = start + direction * 500.0f;
 
@@ -73,7 +73,24 @@ void Part::process(RobSim::CollisionSystem *coll, RobSim::Vector3 position)
              //std::cout << result.point.transpose() <<std::endl;
              if(result.hit) {
                  m_slicePoints.push_back(result.point);
+             }
 
+             start = RobSim::Vector3(0, 0, heights[z]);
+             end = RobSim::Vector3(0, 0, heights[z]);
+
+             direction = RobSim::Vector3::UnitX();
+             rotation = RobSim::AngleAxis(RobSim::radians(angles[a] - heights[z]/40.0f*5.0f), RobSim::Vector3::UnitZ());
+             //rotation = RobSim::AngleAxis(RobSim::radians(angles[a] - heights[z]/40.0f*5.0f), RobSim::Vector3::UnitZ());
+             direction = rotation.toRotationMatrix()*direction;
+             start = start + direction * 500.0f;
+
+             start+=position;
+             end+=position;
+
+             result = coll->rayCast(start, end);
+             //std::cout << result.point.transpose() <<std::endl;
+             if(result.hit) {
+                 m_slicePoints.push_back(result.point);
              }
         }
     }
