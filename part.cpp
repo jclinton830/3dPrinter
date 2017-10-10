@@ -96,6 +96,20 @@ void Part::process(RobSim::CollisionSystem *coll, RobSim::Vector3 position)
     }
 }
 
+//void Part::interpolate(std::vector<RobSim::Vector3> Points)
+//{
+//    for (std::size_t i = 0; i < Points.size() - 1; ++i)
+//    {
+//        std::vector<RobSim::Vector3> interpolatedPoints;
+//        interpolatedPoints.push_back(Points[i] - Points[i+1]);
+
+//        if (interpolatedPoints[i] == 5.0f)
+//        {
+
+//        }
+//    }
+//}
+
 void Part::drawSlicePoints(Ogre::ManualObject *draw)
 {
     draw->begin(RobSim::OgreMaterials::debug(), Ogre::RenderOperation::OT_POINT_LIST);

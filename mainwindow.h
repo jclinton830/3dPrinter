@@ -20,10 +20,6 @@
 
 #include <vector>
 
-
-
-
-
 namespace Ogre
 {
 class SceneManager;
@@ -69,6 +65,7 @@ private slots:
     void on_print_clicked();
     void on_path_clicked();
     void on_slice_clicked();
+    void on_button_clicked();
 
     void updateIK();
 

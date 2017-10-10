@@ -132,6 +132,11 @@
            </layout>
           </widget>
           <widget class="QPlainTextEdit" name="messages"/>
+          <widget class="QPushButton" name="button">
+           <property name="text">
+            <string>Button</string>
+           </property>
+          </widget>
          </widget>
         </item>
        </layout>

@@ -515,7 +515,8 @@ void MainWindow::on_path_clicked()
 
                 path->clear();
 
-                if (file.open(QIODevice::ReadWrite)) {
+                if (file.open(QIODevice::ReadWrite))
+                {
                     for (std::size_t i = 0; i < 99; ++i)
                     {
                         if (i == 99)
@@ -560,6 +561,99 @@ void MainWindow::on_path_clicked()
     }
 }
 
+
+void MainWindow::on_button_clicked()
+{
+    std::vector<RobSim::Vector3> slicePoints;
+    int rail;
+
+    for (int layerHeight = 0; layerHeight < 50; layerHeight+=5)
+    {
+        RobSim::Vector3 p(1000, -5000, 500);
+        RobSim::Vector3 pb(1000, -5050, 500);
+
+
+        slicePoints.push_back(p);
+        slicePoints.push_back(pb);
+
+        std::vector<std::string> robTarget;
+
+        QString filename = "RobotData.txt";
+        QFile file(filename);
+
+        RobSim::JointSet *ikJoints = m_robot->getJointSet("Arm");
+
+        for (rail = 0; rail < 5900; rail+=200.0f)
+        {
+            m_robot->getJoints()[0]->setValue(rail);
+            for (int cfg = 1; cfg <= 8; cfg++)
+            {
+                std::cout << "Trying for rail: " << rail << ", cfg: " << cfg << std::endl;
+                bool valid = true;
+                for (std::size_t i = 0; i < slicePoints.size(); ++i)
+                {
+                    std::cout << "slicepoints size" << slicePoints.size() << std::endl;
+                    RobSim::Matrix4 pose = RobSim::Matrix4::Identity();
+                    pose.topLeftCorner<3, 3>() = RobSim::AngleAxis(RobSim::radians(180.0f), RobSim::Vector3::UnitX()).toRotationMatrix();
+                    pose.topRightCorner<3, 1>() = slicePoints[i];
+
+                    RobSim::Vector result;
+                    // check for IK solution
+                    valid = ikJoints->getIk()->solve(result, pose, cfg);
+                    if (!valid) {
+                        break;
+                    }
+                }
+                if (valid)
+                {
+                    std::cout << "Solved for rail: " << rail << ", cfg: " << cfg << std::endl;
+
+                    // all points solved;
+                    RobSim::LinearPath *path = new RobSim::LinearPath(ikJoints, cfg);
+
+                    path->clear();
+
+                    if (file.open(QIODevice::ReadWrite))
+                    {
+                        for (std::size_t i = 0; i < slicePoints.size(); ++i)
+                        {
+                            RobSim::Matrix4 pose = RobSim::Matrix4::Identity();
+                            pose.topLeftCorner<3, 3>() = RobSim::AngleAxis(RobSim::radians(180.0f), RobSim::Vector3::UnitX()).toRotationMatrix();
+                            pose.topRightCorner<3, 1>() = slicePoints[i];
+                            path->addPoint(pose);
+                            RobSim::Quaternion quat = RobSim::Abb::poseToQuat(pose);
+
+                            std::ostringstream oss;
+                            oss << "[[" << std::to_string(slicePoints[i].x()) << ","
+                                << std::to_string(slicePoints[i].y())
+                                << "," << std::to_string(slicePoints[i].z()) << "],["
+                                << std::to_string(quat.w())
+                                << ","  << std::to_string(quat.x())
+                                << ","  << std::to_string(quat.y())
+                                << "," << std::to_string(quat.z()) <<
+                                   "],[0,0,0,0],["<< std::to_string(rail) << ",9E9, 9E9, 9E9, 9E9, 9E9]],";
+
+                            std::string Target = oss.str();
+
+                            robTarget.push_back(Target);
+
+                            //std::cout << robTarget[i]<< std::endl;
+
+                            QTextStream stream(&file);
+                            stream << QString::fromStdString(robTarget[i])  << endl;
+                        }
+                    }
+                    file.close();
+
+                    m_path.reset(path);
+                }
+                m_ui->pathSlider->setEnabled(true);
+                m_ui->play->setEnabled(true);
+            }
+        }
+
+    }
+}
 void MainWindow::updateWeld()
 {
     if(!m_weld) {
@@ -671,7 +765,7 @@ void MainWindow::processFile(const QString &path)
 void MainWindow::loadModel()
 {
 
-    QFileInfo fi("C:/Development/3dPrinter/cylinder.stl");
+    QFileInfo fi("C:/Development/3dPrinter/circle_wall.stl");
     QString file = fi.absoluteFilePath();
     if (!file.isEmpty())
     {
