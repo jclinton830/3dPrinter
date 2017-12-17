@@ -5,6 +5,9 @@ This software helps plan the process of robotic additive manufacturing using liq
 
 The software takes a 3D CAD file as an input and plans the path for a 6-axis industrial
 robotic manipulator to additively manufacture the input model.
+
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/software1.PNG "")
+
 Once the path is generated the software also allows the user to simulated the process
 before exporting the generated robot path to a physical robot to start 3D printing.
 
