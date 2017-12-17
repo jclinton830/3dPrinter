@@ -15,6 +15,8 @@ Once the user is happy with the path, it is sent to the robot for additive manuf
 In this project the software uses a robot, with a weld torch as its tool to deposit the liquid metal,
 and a method known as drop-by-drop weld deposition is used.  
 
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/software4.PNG "")
+
 The software takes a 3D CAD file as an input and plans the path for a 6-axis industrial robotic manipulator to additively manufacture the input model. Once the path is generated the software also allows the user to simulated the process before exporting the generated robot path to a physical robot to start 3D printing. 
 
 Once the user is happy with the path, it is sent to the robot for additive manufacturing. In this project the software uses a robot, with a weld torch as its tool to deposit the liquid metal, and a method known as drop-by-drop weld deposition is used.  
