@@ -36,6 +36,15 @@ RobSim is a custom library built at UOW and is not made avaliable in this repo d
 This is the main library used to build this metal 3D printing software.
 ========
 
+Results:
+========
+
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171010_161343-min "Droplet configuration test")
+
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171016_142140-min "First test print quater way through")
+
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171011_165551-min "First test print end product")
+
 Future Work:
 =========
 - Setup a control strategy to monitor and carefully change the weld parameters.
