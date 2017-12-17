@@ -39,11 +39,11 @@ This is the main library used to build this metal 3D printing software.
 Results:
 ========
 
-![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171010_161343-min "Droplet configuration test")
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171010_161343-min.jpg "Droplet configuration test")
 
-![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171016_142140-min "First test print quater way through")
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171016_142140-min.jpg "First test print quater way through")
 
-![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171011_165551-min "First test print end product")
+![alt tag](https://github.com/jclinton830/3dPrinter_git/blob/master/Images/IMG_20171011_165551-min.jpg "First test print end product")
 
 Future Work:
 =========
